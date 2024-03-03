@@ -3,101 +3,123 @@ import './App.css'
 
 const tempMovieData = [
   {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
+    imdbID: 'tt1375666',
+    Title: 'Inception',
+    Year: '2010',
     Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
+      'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg',
   },
   {
-    imdbID: "tt0133093",
-    Title: "The Matrix",
-    Year: "1999",
+    imdbID: 'tt0133093',
+    Title: 'The Matrix',
+    Year: '1999',
     Poster:
-      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
+      'https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg',
   },
   {
-    imdbID: "tt6751668",
-    Title: "Parasite",
-    Year: "2019",
+    imdbID: 'tt6751668',
+    Title: 'Parasite',
+    Year: '2019',
     Poster:
-      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
+      'https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg',
   },
-];
+]
 
 const tempWatchedData = [
   {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
+    imdbID: 'tt1375666',
+    Title: 'Inception',
+    Year: '2010',
     Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
+      'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg',
     runtime: 148,
     imdbRating: 8.8,
     userRating: 10,
   },
   {
-    imdbID: "tt0088763",
-    Title: "Back to the Future",
-    Year: "1985",
+    imdbID: 'tt0088763',
+    Title: 'Back to the Future',
+    Year: '1985',
     Poster:
-      "https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
+      'https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg',
     runtime: 116,
     imdbRating: 8.5,
     userRating: 9,
   },
-];
+]
 
 const API_KEY = 'e250f78f'
 
 const average = (arr) =>
-  arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
+  arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0)
 
 function App() {
-  const [movies, setMovies] = useState(tempMovieData)
-  const [watched, setWatched] = useState(tempWatchedData)
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const query = 'Ben-hur'
+  const [query, setQuery] = useState('')
+  const [movies, setMovies] = useState([])
+  const [watched, setWatched] = useState([])
+  const [selectedId, setSelectedId] = useState('egfrw')
+  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(function () {
-    async function fetchMovies() {
-      try {
-        setIsLoading(true)
-        const res = await fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&s=${query}`)
-        if (!res.ok)
-          throw new Error('Something went wrong with fetching movies')
+  useEffect(
+    function () {
+      async function fetchMovies() {
+        try {
+          setIsLoading(true)
+          setError('')
+          const res = await fetch(
+            `https://www.omdbapi.com/?apikey=${API_KEY}&s=${query}`
+          )
+          if (!res.ok)
+            throw new Error('Something went wrong with fetching movies')
 
-        const data = await res.json()
+          const data = await res.json()
 
-        setMovies(data.Search)
-      } catch (err) {
-        // console.log(err.message)
-        setError(err.message)
+          setMovies(data.Search)
+        } catch (err) {
+          // console.log(err.message)
+          setError(err.message)
+        } finally {
+          setIsLoading(false)
+        }
       }
-      finally {
-        setIsLoading(false)
-      }
-    }
 
-    fetchMovies()
-  }, [])
+      fetchMovies()
+    },
+    [query]
+  )
+
+  function handleSelectMovie(id) {
+    setSelectedId((selectedId) => (selectedId === id ? null : id))
+  }
+
+  function handleCloseMovie() {
+    setSelectedId(null)
+  }
 
   return (
     <div className='flex flex-col gap-4'>
       <Navbar>
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResult movies={movies} />
       </Navbar>
       <Main>
         <Box>
           {isLoading && <Loader />}
-          {!isLoading && !error && <MovieList movies={movies} />}
+          {!isLoading && !error && (
+            <MovieList movies={movies} onSelectMovie={handleSelectMovie} />
+          )}
           {error && <ErrorMessage message={error} />}
         </Box>
         <Box>
-          <Summery watched={watched} />
-          <WatchList watched={watched} />
+          {selectedId ? (
+            <MovieDetails onCloseMovie={handleCloseMovie} test={'Test'} />
+          ) : (
+            <>
+              <Summery watched={watched} />
+              <WatchList watched={watched} />
+            </>
+          )}
         </Box>
       </Main>
     </div>
@@ -105,7 +127,9 @@ function App() {
 }
 
 function Loader() {
-  return <p className='flex justify-center pt-12 text-2xl font-bold'>Loading...</p>
+  return (
+    <p className='flex justify-center pt-12 text-2xl font-bold'>Loading...</p>
+  )
 }
 
 function ErrorMessage({ message }) {
@@ -130,11 +154,12 @@ function Logo() {
   )
 }
 
-function Search() {
-  const [query, setQuery] = useState("")
+function Search({ query, setQuery }) {
   return (
     <>
-      <input type="text" placeholder='Search movies...'
+      <input
+        type='text'
+        placeholder='Search movies...'
         className='flex items-center bg-primary-light text-sm py-1 px-4 rounded w-96 outline-none'
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -145,7 +170,9 @@ function Search() {
 
 function NumResult({ movies }) {
   return (
-    <div className='flex items-center text-xs text-white'>Found {movies.length} results</div>
+    <div className='flex items-center text-xs text-white'>
+      Found {movies?.length} results
+    </div>
   )
 }
 
@@ -162,8 +189,10 @@ function Box({ children }) {
 
   return (
     <div className='bg-background-500 rounded-md relative w-[25rem]'>
-      <button className='flex justify-center items-center pb-1 absolute right-2 top-2 w-6 h-6 rounded-full bg-[#212529] text-[1.4rem]'
-        onClick={() => setIsOpen(open => !open)}>
+      <button
+        className='flex justify-center items-center pb-1 absolute right-2 top-2 w-6 h-6 rounded-full bg-[#212529] text-[1.4rem]'
+        onClick={() => setIsOpen((open) => !open)}
+      >
         {isOpen ? '-' : '+'}
       </button>
       {isOpen && children}
@@ -171,19 +200,27 @@ function Box({ children }) {
   )
 }
 
-function MovieList({ movies }) {
+function MovieList({ movies, onSelectMovie }) {
   return (
     <ul>
-      {movies?.map(movie => <Movie movie={movie} key={movie.imdbID} />)}
+      {movies?.map((movie) => (
+        <Movie movie={movie} key={movie.imdbID} onSelectMovie={onSelectMovie} />
+      ))}
     </ul>
   )
 }
 
-
-function Movie({ movie }) {
+function Movie({ movie, onSelectMovie }) {
   return (
-    <li className='flex items-center px-6 py-3 gap-4 border-b border-background-100'>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} className='h-10 w-7' />
+    <li
+      className='flex items-center px-6 py-3 gap-4 border-b border-background-100'
+      onClick={() => onSelectMovie(movie.imdbID)}
+    >
+      <img
+        src={movie.Poster}
+        alt={`${movie.Title} poster`}
+        className='h-10 w-7'
+      />
       <div>
         <h3 className='font-semibold text-sm'>{movie.Title}</h3>
         <p>
@@ -195,25 +232,39 @@ function Movie({ movie }) {
   )
 }
 
+function MovieDetails({ onCloseMovie }) {
+  return (
+    <>
+      <button
+        className='flex absolute text-[1.4rem] font-bold bg-[#212529] rounded-full top-2 left-2 justify-center px-2 pb-[1rem] pt-[.4rem]'
+        onClick={onCloseMovie}
+      >
+        &larr;
+      </button>
+    </>
+  )
+}
+
 function WatchList({ watched }) {
   return (
     <ul>
-      {watched.map((movie) => <WatchedMovie key={movie.imdbID} movie={movie} />)}
+      {watched.map((movie) => (
+        <WatchedMovie key={movie.imdbID} movie={movie} />
+      ))}
     </ul>
   )
-
-
 }
 
 function Summery({ watched }) {
-  const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
-  const avgUserRating = average(watched.map((movie) => movie.userRating));
-  const avgRuntime = average(watched.map((movie) => movie.runtime));
-
+  const avgImdbRating = average(watched.map((movie) => movie.imdbRating))
+  const avgUserRating = average(watched.map((movie) => movie.userRating))
+  const avgRuntime = average(watched.map((movie) => movie.runtime))
 
   return (
     <div className='flex flex-col px-8 py-3 gap-2 bg-background-100 rounded-md'>
-      <h2 className='uppercase font-semibold text-[.8rem]'>Movies you watched</h2>
+      <h2 className='uppercase font-semibold text-[.8rem]'>
+        Movies you watched
+      </h2>
       <div className='flex justify-between'>
         <p className='flex gap-1'>
           <span>#️⃣</span>
@@ -232,14 +283,18 @@ function Summery({ watched }) {
           <span>{avgRuntime} min</span>
         </p>
       </div>
-    </div >
+    </div>
   )
 }
 
 function WatchedMovie({ movie }) {
   return (
     <li className='flex items-center px-6 py-3 gap-4 border-b border-background-100'>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} className='h-10 w-7' />
+      <img
+        src={movie.Poster}
+        alt={`${movie.Title} poster`}
+        className='h-10 w-7'
+      />
       <div className='flex flex-col gap-2 w-3/5'>
         <h3 className='font-semibold text-sm'>{movie.Title}</h3>
         <div className='flex justify-between'>
@@ -260,7 +315,5 @@ function WatchedMovie({ movie }) {
     </li>
   )
 }
-
-
 
 export default App
