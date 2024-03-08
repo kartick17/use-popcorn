@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import './App.css'
+import StarRating from './StarRating'
 
 const tempMovieData = [
   {
@@ -55,10 +56,10 @@ const average = (arr) =>
 
 function App() {
   const [error, setError] = useState('')
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState('Test')
   const [movies, setMovies] = useState([])
   const [watched, setWatched] = useState([])
-  const [selectedId, setSelectedId] = useState('egfrw')
+  const [selectedId, setSelectedId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(
@@ -97,6 +98,14 @@ function App() {
     setSelectedId(null)
   }
 
+  function handleAddWatched(movie) {
+    setWatched((watched) => [...watched, movie])
+  }
+
+  function handleRemoveWatched(id) {
+    setWatched((watched) => watched.filter((movie) => movie.imdbID !== id))
+  }
+
   return (
     <div className='flex flex-col gap-4'>
       <Navbar>
@@ -113,11 +122,19 @@ function App() {
         </Box>
         <Box>
           {selectedId ? (
-            <MovieDetails onCloseMovie={handleCloseMovie} test={'Test'} />
+            <MovieDetails
+              watched={watched}
+              selectedId={selectedId}
+              onCloseMovie={handleCloseMovie}
+              onAddWatched={handleAddWatched}
+            />
           ) : (
             <>
               <Summery watched={watched} />
-              <WatchList watched={watched} />
+              <WatchList
+                watched={watched}
+                onRemoveWatched={handleRemoveWatched}
+              />
             </>
           )}
         </Box>
@@ -232,33 +249,137 @@ function Movie({ movie, onSelectMovie }) {
   )
 }
 
-function MovieDetails({ onCloseMovie }) {
+function MovieDetails({ watched, onCloseMovie, selectedId, onAddWatched }) {
+  const [movie, setMovie] = useState({})
+  const [isLoading, setIsLoading] = useState(false)
+  const [userRating, setUserRating] = useState('')
+
+  const isWatched = watched.filter((movie) => movie.imdbID === selectedId)
+
+  const {
+    Title: title,
+    Year: year,
+    Poster: poster,
+    Runtime: runtime,
+    imdbRating,
+    Plot: plot,
+    Released: released,
+    Actors: actors,
+    Director: director,
+    Genre: genre,
+  } = movie
+
+  function handleAdd() {
+    const newWatchedMovie = {
+      imdbID: selectedId,
+      poster,
+      title,
+      imdbRating: +imdbRating,
+      runtime: isNaN(+runtime.split(' ')[0]) ? 0 : +runtime.split(' ')[0],
+      userRating,
+    }
+
+    onAddWatched(newWatchedMovie)
+    onCloseMovie()
+  }
+
+  useEffect(() => {
+    async function getMovieDetails() {
+      setIsLoading(true)
+      const res = await fetch(
+        `https://www.omdbapi.com/?apikey=${API_KEY}&i=${selectedId}`
+      )
+      if (!res.ok) throw new Error('Something went wrong with fetching movies')
+
+      const data = await res.json()
+      // console.log(data)
+
+      setMovie(data)
+      setIsLoading(false)
+    }
+
+    getMovieDetails()
+  }, [selectedId])
   return (
-    <>
+    <div className='rounded-md'>
       <button
-        className='flex absolute text-[1.4rem] font-bold bg-[#212529] rounded-full top-2 left-2 justify-center px-2 pb-[1rem] pt-[.4rem]'
+        className='flex absolute text-[1.2rem] font-extrabold bg-[#f6f6f6] text-background-900 rounded-full top-2 left-2 justify-center pb-[.5rem] px-[.1rem]'
         onClick={onCloseMovie}
       >
         &larr;
       </button>
-    </>
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <header className='flex max-h-40'>
+          <img src={poster} alt={title} className='h-40 rounded-tl-md' />
+          <div className='flex flex-col  gap-2 bg-background-100 w-full p-6 rounded-tr-md'>
+            <h2 className=' text-sm font-semibold'>{title}</h2>
+            <p>
+              {released} &bull; {runtime === 'N/A' ? '0 min' : runtime}
+            </p>
+            <p>{genre}</p>
+            <p>
+              <span>⭐️</span> {imdbRating} IMDb rating
+            </p>
+          </div>
+        </header>
+      )}
+
+      <section className=' flex  flex-col gap-6 mt-10 w-80  mx-auto'>
+        <div className='flex flex-col bg-background-100 py-4 px-5 gap-4 rounded-md'>
+          {isWatched.length === 0 ? (
+            <>
+              <StarRating
+                maxRating={10}
+                size={24}
+                onSetRating={setUserRating}
+              />
+              {userRating > 0 && (
+                <button
+                  className='bg-primary py-2 rounded-full font-semibold text-sm'
+                  onClick={handleAdd}
+                >
+                  + Add to list
+                </button>
+              )}
+            </>
+          ) : (
+            <p className='text-sm font-semibold text-center'>
+              You rated with movie {isWatched[0]?.userRating} <span>⭐️</span>
+            </p>
+          )}
+        </div>
+        <p className='text-sm'>
+          <em>{plot}</em>
+        </p>
+        <p>Starring {actors}</p>
+        <p>Directed by {director}</p>
+      </section>
+    </div>
   )
 }
 
-function WatchList({ watched }) {
+function WatchList({ watched, onRemoveWatched }) {
   return (
     <ul>
       {watched.map((movie) => (
-        <WatchedMovie key={movie.imdbID} movie={movie} />
+        <WatchedMovie
+          key={movie.imdbID}
+          movie={movie}
+          onRemoveWatched={onRemoveWatched}
+        />
       ))}
     </ul>
   )
 }
 
 function Summery({ watched }) {
-  const avgImdbRating = average(watched.map((movie) => movie.imdbRating))
-  const avgUserRating = average(watched.map((movie) => movie.userRating))
-  const avgRuntime = average(watched.map((movie) => movie.runtime))
+  const avgImdbRating =
+    Math.round(average(watched.map((movie) => movie.imdbRating)) * 10) / 10
+  const avgUserRating =
+    Math.round(average(watched.map((movie) => movie.userRating)) * 10) / 10
+  const avgRuntime = Math.round(average(watched.map((movie) => movie.runtime)))
 
   return (
     <div className='flex flex-col px-8 py-3 gap-2 bg-background-100 rounded-md'>
@@ -287,16 +408,16 @@ function Summery({ watched }) {
   )
 }
 
-function WatchedMovie({ movie }) {
+function WatchedMovie({ movie, onRemoveWatched }) {
   return (
-    <li className='flex items-center px-6 py-3 gap-4 border-b border-background-100'>
+    <li className='flex justify-between items-center px-6 py-3 gap-4 border-b border-background-100'>
       <img
-        src={movie.Poster}
-        alt={`${movie.Title} poster`}
+        src={movie.poster}
+        alt={`${movie.title} poster`}
         className='h-10 w-7'
       />
       <div className='flex flex-col gap-2 w-3/5'>
-        <h3 className='font-semibold text-sm'>{movie.Title}</h3>
+        <h3 className='font-semibold text-sm'>{movie.title}</h3>
         <div className='flex justify-between'>
           <p className='flex gap-1'>
             <span>⭐️</span>
@@ -312,6 +433,12 @@ function WatchedMovie({ movie }) {
           </p>
         </div>
       </div>
+      <button
+        className='bg-red px-[.3rem] pb-[.05rem] rounded-full text-background-500 font-semibold'
+        onClick={() => onRemoveWatched(movie.imdbID)}
+      >
+        x
+      </button>
     </li>
   )
 }
