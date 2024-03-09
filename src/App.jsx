@@ -56,7 +56,7 @@ const average = (arr) =>
 
 function App() {
   const [error, setError] = useState('')
-  const [query, setQuery] = useState('Test')
+  const [query, setQuery] = useState('')
   const [movies, setMovies] = useState([])
   const [watched, setWatched] = useState([])
   const [selectedId, setSelectedId] = useState('')
@@ -64,12 +64,15 @@ function App() {
 
   useEffect(
     function () {
+      const controller = new AbortController()
+
       async function fetchMovies() {
         try {
           setIsLoading(true)
           setError('')
           const res = await fetch(
-            `https://www.omdbapi.com/?apikey=${API_KEY}&s=${query}`
+            `https://www.omdbapi.com/?apikey=${API_KEY}&s=${query}`,
+            { signal: controller.signal }
           )
           if (!res.ok)
             throw new Error('Something went wrong with fetching movies')
@@ -78,14 +81,17 @@ function App() {
 
           setMovies(data.Search)
         } catch (err) {
-          // console.log(err.message)
-          setError(err.message)
+          if (err.name !== 'AbortError') setError(err.message)
         } finally {
           setIsLoading(false)
         }
       }
 
+      handleCloseMovie()
       fetchMovies()
+      return function () {
+        controller.abort()
+      }
     },
     [query]
   )
@@ -300,6 +306,35 @@ function MovieDetails({ watched, onCloseMovie, selectedId, onAddWatched }) {
 
     getMovieDetails()
   }, [selectedId])
+
+  useEffect(
+    function () {
+      if (!title) return
+
+      document.title = `Movie: ${title}`
+
+      return function () {
+        document.title = 'usePopcorn'
+      }
+    },
+    [title]
+  )
+
+  useEffect(
+    function () {
+      function callback(e) {
+        if (e.code === 'Escape') onCloseMovie()
+      }
+
+      document.addEventListener('keydown', callback)
+
+      return function () {
+        document.removeEventListener('keydown', callback)
+      }
+    },
+    [onCloseMovie]
+  )
+
   return (
     <div className='rounded-md'>
       <button
