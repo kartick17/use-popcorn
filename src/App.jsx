@@ -58,9 +58,37 @@ function App() {
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
   const [movies, setMovies] = useState([])
-  const [watched, setWatched] = useState([])
   const [selectedId, setSelectedId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  // const [watched, setWatched] = useState([])
+  const [watched, setWatched] = useState(function () {
+    const storedData = localStorage.getItem('watched')
+    return JSON.parse(storedData)
+  })
+
+  function handleSelectMovie(id) {
+    setSelectedId((selectedId) => (selectedId === id ? null : id))
+  }
+
+  function handleCloseMovie() {
+    setSelectedId(null)
+  }
+
+  function handleAddWatched(movie) {
+    setWatched((watched) => [...watched, movie])
+  }
+
+  function handleRemoveWatched(id) {
+    setWatched((watched) => watched.filter((movie) => movie.imdbID !== id))
+  }
+
+  useEffect(
+    function () {
+      localStorage.setItem('watched', JSON.stringify(watched))
+    },
+    [watched]
+  )
 
   useEffect(
     function () {
@@ -95,22 +123,6 @@ function App() {
     },
     [query]
   )
-
-  function handleSelectMovie(id) {
-    setSelectedId((selectedId) => (selectedId === id ? null : id))
-  }
-
-  function handleCloseMovie() {
-    setSelectedId(null)
-  }
-
-  function handleAddWatched(movie) {
-    setWatched((watched) => [...watched, movie])
-  }
-
-  function handleRemoveWatched(id) {
-    setWatched((watched) => watched.filter((movie) => movie.imdbID !== id))
-  }
 
   return (
     <div className='flex flex-col gap-4'>
