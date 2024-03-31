@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
+
 import './App.css'
 import StarRating from './StarRating'
+import { useMovies } from './useMovie'
+
+const API_KEY = 'e250f78f'
 
 const tempMovieData = [
   {
@@ -49,17 +53,13 @@ const tempWatchedData = [
   },
 ]
 
-const API_KEY = 'e250f78f'
-
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0)
 
 function App() {
-  const [error, setError] = useState('')
   const [query, setQuery] = useState('')
-  const [movies, setMovies] = useState([])
   const [selectedId, setSelectedId] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const { error, movies, isLoading } = useMovies(query, handleCloseMovie)
 
   // const [watched, setWatched] = useState([])
   const [watched, setWatched] = useState(function () {
@@ -88,40 +88,6 @@ function App() {
       localStorage.setItem('watched', JSON.stringify(watched))
     },
     [watched]
-  )
-
-  useEffect(
-    function () {
-      const controller = new AbortController()
-
-      async function fetchMovies() {
-        try {
-          setIsLoading(true)
-          setError('')
-          const res = await fetch(
-            `https://www.omdbapi.com/?apikey=${API_KEY}&s=${query}`,
-            { signal: controller.signal }
-          )
-          if (!res.ok)
-            throw new Error('Something went wrong with fetching movies')
-
-          const data = await res.json()
-
-          setMovies(data.Search)
-        } catch (err) {
-          if (err.name !== 'AbortError') setError(err.message)
-        } finally {
-          setIsLoading(false)
-        }
-      }
-
-      handleCloseMovie()
-      fetchMovies()
-      return function () {
-        controller.abort()
-      }
-    },
-    [query]
   )
 
   return (
@@ -195,10 +161,7 @@ function Search({ query, setQuery }) {
   useEffect(
     function () {
       function callback(e) {
-        if (document.activeElement === inputEl.current) {
-          console.log(inputEl.current)
-          return
-        }
+        if (document.activeElement === inputEl.current) return
 
         if (e.code === 'Enter') {
           inputEl.current.focus()
