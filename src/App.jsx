@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import './App.css'
 import StarRating from './StarRating'
 
@@ -190,6 +190,28 @@ function Logo() {
 }
 
 function Search({ query, setQuery }) {
+  const inputEl = useRef(null)
+
+  useEffect(
+    function () {
+      function callback(e) {
+        if (document.activeElement === inputEl.current) {
+          console.log(inputEl.current)
+          return
+        }
+
+        if (e.code === 'Enter') {
+          inputEl.current.focus()
+          setQuery('')
+        }
+      }
+
+      document.addEventListener('keydown', callback)
+
+      return () => document.removeEventListener('keydown', callback)
+    },
+    [setQuery]
+  )
   return (
     <>
       <input
@@ -198,6 +220,7 @@ function Search({ query, setQuery }) {
         className='flex items-center bg-primary-light text-sm py-1 px-4 rounded w-96 outline-none'
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        ref={inputEl}
       />
     </>
   )
